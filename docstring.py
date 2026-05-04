@@ -7,10 +7,8 @@ from langchain_core.output_parsers import StrOutputParser
 
 load_dotenv()
 
-# --- Настройка модели ---
 model = ChatOpenAI(model=os.getenv("MODEL_NAME", "gpt-oss-20b"))
 
-# --- Системный промпт ---
 SYSTEM_PROMPT = """Ты — эксперт по документированию Python-кода.
 Твоя задача — сгенерировать docstring для переданной функции в указанном стиле.
 
@@ -20,7 +18,6 @@ SYSTEM_PROMPT = """Ты — эксперт по документированию
 - Если переданный код НЕ является функцией — верни строго: ERROR: Переданный код не является функцией Python.
 - Поддерживаемые стили: Google, NumPy, reStructuredText."""
 
-# --- Входные данные ---
 code = """
 def calculate_discount(price: float, discount_percent: float) -> float:
     if discount_percent < 0 or discount_percent > 100:
@@ -29,7 +26,6 @@ def calculate_discount(price: float, discount_percent: float) -> float:
 """
 style = "Google"
 
-# --- Цепочка с шаблоном промпта ---
 prompt = ChatPromptTemplate.from_messages([
     ("system", SYSTEM_PROMPT),
     ("human", "Стиль документации: {style}\n\nКод функции:\n```python\n{code}\n```\n\nСгенерируй docstring."),
@@ -37,13 +33,11 @@ prompt = ChatPromptTemplate.from_messages([
 
 chain = prompt | model | StrOutputParser()
 
-# --- Потоковый вывод ---
 print("Потоковый вывод docstring:")
 for chunk in chain.stream({"code": code, "style": style}):
     print(chunk, end="", flush=True)
 print()
 
-# --- Batch: генерация docstring в разных стилях ---
 print("\nBatch — три стиля для одной функции:")
 inputs = [
     {"code": code, "style": "Google"},
@@ -56,7 +50,6 @@ for inp, response in zip(inputs, responses):
     print(f"\n--- Стиль: {inp['style']} ---")
     print(response)
 
-# --- Граничный случай: код не является функцией ---
 print("\n--- Граничный случай: передан класс вместо функции ---")
 bad_code = """
 class MyClass:
